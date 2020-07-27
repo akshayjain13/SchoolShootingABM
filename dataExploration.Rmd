@@ -1,0 +1,64 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(tidyr)
+```
+
+```{r}
+#Read in data
+data = data.frame()
+for(name in list.files('datasets', pattern=NULL, all.files=FALSE,full.names=FALSE)){
+  data <- data %>% rbind(read.csv(paste0("datasets/",name)))
+}
+data <- data %>% mutate(Casualty_Rate = as.numeric(Casualty_Rate)) %>% rename(Curved= Straight) %>% mutate(Curved = (Curved+1)%%2)
+```
+
+#Linear Regressions
+```{r}
+linearMod <- lm(Casualty_Rate ~ NumberOfExits + WidthOfExits + Obstacles+ WidthOfHallway +Curved, data=data)
+summary(linearMod)
+
+linearModInteraction <- lm(Casualty_Rate ~ NumberOfExits + WidthOfExits + Obstacles + WidthOfHallway + Curved + NumberOfExits*WidthOfExits + NumberOfExits*Obstacles + WidthOfExits*Obstacles + WidthOfHallway*NumberOfExits + WidthOfHallway*Obstacles + WidthOfHallway*WidthOfExits +Curved*NumberOfExits + Curved*WidthOfExits + Curved*WidthOfHallway + Curved*Obstacles, data=data)
+summary(linearModInteraction)
+
+stargazer(linearMod, linearModInteraction, title = "Results", align = TRUE, out="models.htm", omit.stat = c("f", "ser"), dep.var.labels= c("Casualty Rate"), covariate.labels = c("Number Of Exits", "Width Of Exits", "Obstacles", "Width Of Hallway", "Curved Hallway", "Number Of Exits * Width Of Exits", "Number of Exits * Obstacles", "Width Of Exits * Obstacles", "Width Of Hallway * Number Of Exits","Width Of Hallway * Obstacles","Width Of Hallway * Width of Exits", "Curved Hallway * Number of Exits", "Curved Hallway * Width of Exits", "Curved Hallway * Width of Hallway", "Curved Hallway * Obstacles", "Constant") )
+
+#This outputs the regression results. See models.htm for the nice pretty table
+```
+
+This produces a table of the average rate for each option arranged from lowest rate to highest rate.
+```{r}
+data %>% 
+  group_by(Curved, WidthOfHallway, Obstacles, WidthOfExits, NumberOfExits) %>% 
+  summarize(average_casualty_rate = mean(Casualty_Rate),average_casualties = mean(Casualties), total_cases = n()) %>%
+  as.data.frame() %>% 
+  mutate(Straight = ifelse(Curved==1, "Curved", "Straight")) %>% 
+  mutate(Obstacles= ifelse(Obstacles==1, "Obstacles", "No Obstacles")) %>% 
+  arrange(average_casualty_rate) %>% 
+  write.csv("Averages.csv")
+```
+
+# This makes the big colorful box and whisker plot for every factor.
+```{r}
+dataLong <- data %>% select(-c(Total_Students, Casualties)) %>% mutate(Curved = ifelse(Curved==1, "Curved", "Straight")) %>% mutate(Obstacles = ifelse(Obstacles==1, "Yes", "No"))
+dataLong <- gather(dataLong, tested_factor, value, Curved:WidthOfHallway, factor_key= TRUE) %>% mutate(value = as.factor(value))%>% mutate(tested_factor = as.character(tested_factor)) %>% 
+  mutate(tested_factor = ifelse(tested_factor == "WidthOfHallway", "Width Of Hallways", tested_factor)) %>% 
+  mutate(tested_factor = ifelse(tested_factor == "NumberOfExits", "Number Of Exits", tested_factor)) %>% 
+  mutate(tested_factor = ifelse(tested_factor == "WidthOfExits", "Width Of Exits", tested_factor))
+ggplot(dataLong, aes(x=value, y=Casualty_Rate, group=value))+geom_boxplot(aes(fill=tested_factor))+ facet_grid(. ~ tested_factor, scales='free') + ggtitle("Comparison of Each Tested Factor") + xlab("Tested Value") + ylab("Casuality Rate")+ theme(legend.position = "none") + theme(plot.title = element_text(hjust = 0.5))
+```
+#This is a t-test. I plugged in different variables for every comparison I did.
+```{r}
+temp <- data %>% filter(WidthOfHallway==4 | WidthOfHallway==6)
+t.test(temp$Casualty_Rate ~temp$WidthOfHallway)
+```
+#Makes a plot for the Effect of Hallway Width on Average Casualty Rates
+```{r}
+data %>% group_by(WidthOfHallway, Obstacles) %>% summarize(Average_Casualty_Rate = mean(Casualty_Rate)) %>% mutate(Obstacles= ifelse(Obstacles==1, "Yes", "No")) %>% ggplot()+ geom_line(aes(x=WidthOfHallway, y=Average_Casualty_Rate, color = Obstacles)) +ggtitle("Effect of Hallway Width on Average Casualty Rates") + xlab("Width of Hallway (meters)") + ylab("Average Casualty Rate")+ theme(plot.title = element_text(hjust = 0.5))
+```
+

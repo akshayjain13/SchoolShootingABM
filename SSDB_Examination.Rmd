@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+This code takes the dataset of school shootings and identifies some key statistics and facts. It doesn't do much aside from identify the number of shootings and then obtain a list of the deadliest shootings
+
+```{r}
+library(janitor)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+```{r}
+df <- read.csv("SSDB_dataset.csv", stringsAsFactors = FALSE)
+df <- df %>% 
+  clean_names() %>% 
+  rename(reliability_score_1_to_5=  reliability_score_1_5) %>% 
+  mutate(date = mdy(date))
+df %>% count(category)
+df
+
+df_indiscriminate %>% arrange(date)
+df_indiscriminate %>% arrange(-killed_includes_shooter)
+```
+
