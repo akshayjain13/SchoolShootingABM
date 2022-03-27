@@ -1,8 +1,6 @@
 # Can School Design Save Lives:
 ## An Agent-Based Model Evaluating the Effects of Architecture on School Shootings 
 
-Akshay Jain's Northwestern MMSS Senior Thesis and current working paper
-
 ### What is this?
 
 This is the code and data for my senior thesis which constructed Agent-Based Models (ABMs) in AnyLogic software (anylogic.com). This is the backing for a working paper submitted to the Journal of Computational Social Science for review. 
