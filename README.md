@@ -25,7 +25,7 @@ Each 5 character alphanumeric code represents the components of the floor plan.
 * The fifth character represents the width of the hallways in meters (either 2, 4, or 6)
 
 
-### Video of simulation on one floor plan
+### Example Simulation Run
 
 https://user-images.githubusercontent.com/49322330/160303126-c468ebde-8089-4c87-95b3-e2a92304bfea.mp4
 
